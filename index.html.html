@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tantangan Kisi-Kisi SKI</title>
+<style>
+  :root {
+    --pri: #0f766e; --pri-d: #115e59; --acc: #d97706;
+    --ok: #16a34a; --err: #dc2626; --txt: #1e293b; --brd: #cbd5e1;
+  }
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body {
+    margin: 0; min-height: 100vh; padding: 16px;
+    background: linear-gradient(135deg, #0f766e, #134e4a);
+    display: flex; justify-content: center; align-items: center; color: var(--txt);
+  }
+  .box {
+    width: 100%; max-width: 800px; background: #fff;
+    border-radius: 18px; box-shadow: 0 20px 40px rgba(0,0,0,.25); overflow: hidden;
+  }
+  .hdr {
+    background: #f8fafc; padding: 14px 22px; border-bottom: 2px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+  .badge { background: var(--pri); color: #fff; padding: 5px 13px; border-radius: 20px; font-size: .85rem; font-weight: 700; }
+  .stats { display: flex; gap: 10px; font-weight: 700; font-size: .95rem; }
+  .stat { background: #fff; border: 1px solid var(--brd); padding: 5px 11px; border-radius: 8px; }
+  .t-wrap { width: 100%; height: 7px; background: #e2e8f0; }
+  .t-bar { height: 100%; width: 100%; background: var(--acc); transition: width 1s linear; }
+  .content { padding: 24px; }
+  .center { text-align: center; padding: 16px 0; }
+  h1 { color: var(--pri-d); margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 20px 0; text-align: left; }
+  .card { background: #f0fdfa; border: 1px solid #99f6e4; padding: 12px; border-radius: 10px; font-size: .88rem; }
+  .card strong { display: block; color: var(--pri-d); margin-bottom: 3px; }
+  .btn {
+    background: var(--pri); color: #fff; border: none; padding: 13px 26px;
+    font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer;
+  }
+  .btn:hover { background: var(--pri-d); }
+  .meta { font-size: .88rem; color: #64748b; font-weight: 700; margin-bottom: 6px; }
+  .q-text {
+    font-size: 1.06rem; line-height: 1.6; background: #f8fafc;
+    padding: 16px; border-left: 5px solid var(--pri); border-radius: 8px; margin-bottom: 16px;
+  }
+  .hint { display: block; color: var(--acc); font-weight: 700; font-size: .9rem; margin-bottom: 12px; }
+  .opt-list { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex; gap: 12px; align-items: flex-start; text-align: left;
+    background: #fff; border: 2px solid var(--brd); padding: 12px 14px;
+    border-radius: 10px; cursor: pointer; font-size: .98rem; line-height: 1.45;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--pri); background: #f0fdfa; }
+  .opt.sel { border-color: var(--pri); background: #ccfbf1; font-weight: 600; }
+  .opt.ok { border-color: var(--ok); background: #dcfce7; color: #14532d; }
+  .opt.err { border-color: var(--err); background: #fee2e2; color: #7f1d1d; }
+  .key {
+    background: #e2e8f0; font-weight: 700; min-width: 28px; height: 28px;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .sel .key { background: var(--pri); color: #fff; }
+  .tf-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px; border: 1px solid var(--brd); border-radius: 10px; margin-bottom: 9px;
+  }
+  .tf-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .tf-b { padding: 7px 12px; border: 2px solid var(--brd); border-radius: 7px; background: #fff; font-weight: 700; cursor: pointer; }
+  .tf-b.on-t { background: #0284c7; color: #fff; border-color: #0284c7; }
+  .tf-b.on-f { background: #ea580c; color: #fff; border-color: #ea580c; }
+  .row-ok { border-color: var(--ok) !important; background: #dcfce7 !important; }
+  .row-err { border-color: var(--err) !important; background: #fee2e2 !important; }
+  .m-row { padding: 12px; border: 1px solid var(--brd); border-radius: 10px; margin-bottom: 10px; background: #f8fafc; }
+  .m-sel { width: 100%; margin-top: 7px; padding: 9px; border-radius: 7px; border: 2px solid #94a3b8; font-size: .95rem; }
+  .fb { margin-top: 18px; padding: 14px; border-radius: 10px; font-weight: 600; display: none; line-height: 1.5; }
+  .fb.ok { display: block; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .fb.err { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .ftr { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+  .hide { display: none !important; }
+  .big { font-size: 3.2rem; font-weight: 800; color: var(--pri); margin: 8px 0; }
+  @media(max-width:600px){ .tf-row{ flex-direction:column; align-items:stretch; } .tf-b{ flex:1; } }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="hdr hide" id="hdr">
+    <span class="badge" id="badge">PG</span>
+    <div class="stats">
+      <div class="stat">❤️ <span id="lives">3</span></div>
+      <div class="stat">🏆 <span id="score">0</span> <small id="combo" style="color:#d97706"></small></div>
+      <div class="stat">⏱️ <span id="timer">45</span>s</div>
+    </div>
+  </div>
+  <div class="t-wrap hide" id="twrap"><div class="t-bar" id="tbar"></div></div>
+
+  <div class="content">
+    <div class="center" id="s-start">
+      <h1>🕌 Tantangan Kisi-Kisi SKI</h1>
+      <p>Taklukkan 25 soal interaktif Sejarah Kebudayaan Islam (Periode Makkah, Madinah, & Kurikulum Berbasis Cinta)!</p>
+      <div class="grid">
+        <div class="card"><strong>📚 4 Tipe Soal</strong>PG Biasa, PG Kompleks (2 Jawaban), Benar/Salah, & Menjodohkan.</div>
+        <div class="card"><strong>❤️ 3 Nyawa</strong>Salah menjawab mengurangi 1 nyawa. Jaga fokusmu!</div>
+        <div class="card"><strong>🔥 Bonus Kombo</strong>Jawab cepat & beruntun untuk poin ekstra.</div>
+        <div class="card"><strong>🔀 Acak Otomatis</strong>Urutan soal diacak ulang setiap sesi latihan.</div>
+      </div>
+      <button class="btn" onclick="startGame()">Mulai Tantangan 🚀</button>
+    </div>
+
+    <div id="s-quiz" class="hide">
+      <div class="meta" id="prog">Soal 1 dari 25</div>
+      <div class="q-text" id="qtext"></div>
+      <span class="hint" id="hint"></span>
+      <div id="area"></div>
+      <div class="fb" id="fb"></div>
+      <div class="ftr">
+        <button class="btn" id="btn-sub" onclick="checkAns()">Kunci Jawaban</button>
+        <button class="btn hide" id="btn-nxt" onclick="nextQ()">Soal Berikutnya ➡️</button>
+      </div>
+    </div>
+
+    <div class="center hide" id="s-end">
+      <h1 id="etitle">Selesai!</h1>
+      <p id="esub"></p>
+      <div class="big" id="fscore">0</div>
+      <p id="fstat" style="font-weight:700"></p><br>
+      <button class="btn" onclick="startGame()">Main Lagi 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB = [
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Analisis Sosio-Kultural Masyarakat Arab Pra-Islam:</strong> Masyarakat Arab pedalaman memiliki fanatisme kabilah (ashobiyah) yang tinggi, namun sangat menjunjung sastra syair. Dari perspektif sosiologi sejarah, mengapa syair memegang peranan krusial bagi eksistensi sebuah kabilah?",
+    o:[
+      ["A","Syair berfungsi sebagai satu-satunya undang-undang hukum tertulis antar kabilah."],
+      ["B","Syair digunakan sebagai media propaganda politik, rekam jejak sejarah, legitimasi harga diri, serta alat diplomasi kabilah."],
+      ["C","Syair diciptakan murni sebagai sarana ibadah ritual keagamaan di sekitar Ka'bah."],
+      ["D","Syair merupakan alat tukar resmi setara dinar dan dirham dalam transaksi ekonomi."],
+      ["E","Syair digunakan khusus oleh kaum wanita untuk memimpin pasukan perang."]
+    ],
+    a:"B", e:"Penyair adalah juru bicara kabilah untuk diplomasi, propaganda, rekam sejarah, dan penjaga kehormatan suku."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Studi Kasus Kelompok Hunayif:</strong> Di tengah dominasi paganisme Makkah, kelompok Hunayif (Waraqah bin Naufal, Zaid bin Amr, dll.) menolak menyembah berhala dan meyakini ajaran Nabi Ibrahim AS. Tindakan mengasingkan diri dari tradisi mayoritas tersebut mencerminkan bentuk...",
+    o:[
+      ["A","Keputusasaan total terhadap kondisi ekonomi Jazirah Arab."],
+      ["B","Perlawanan kultural dan spiritual terhadap dekadensi moral serta penyimpangan akidah paganisme secara sadar."],
+      ["C","Upaya sistematis mendirikan kerajaan baru di luar kota Makkah."],
+      ["D","Sikap apatis terhadap masa depan generasi muda bangsa Arab."],
+      ["E","Strategi monopoli jalur kafilah dagang menuju Syam."]
+    ],
+    a:"B", e:"Kaum Hunayif secara sadar menolak kemusyrikan dan kemerosotan moral masyarakat Jahiliyah."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Evaluasi Taktis Dakwah di Makkah:</strong> Ditinjau dari manajemen strategi kepemimpinan, apa alasan utama Nabi Muhammad SAW menerapkan fase dakwah sembunyi-sembunyi (sirriyah) sebelum dakwah terang-terangan (jahriyah)?",
+    o:[
+      ["A","Menunggu aliansi politik dan keamanan dari Bizantium dan Persia."],
+      ["B","Membangun basis internal yang solid serta ketahanan mental kader sebelum terjadi benturan terbuka."],
+      ["C","Menghindari pemotongan pajak perdagangan oleh pemuka Quraisy."],
+      ["D","Menyiapkan kekuatan pangkalan militer bersenjata di perbukitan Makkah."],
+      ["E","Menjaga kerahasiaan rute kafilah dagang kaum muslimin."]
+    ],
+    a:"B", e:"Dakwah sirriyah memperkuat mental dan akidah kader awal sebelum menghadapi tekanan terbuka Quraisy."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Kasus Geopolitik Hijrah ke Habasyah:</strong> Analisis manakah yang paling akurat mengenai alasan Nabi Muhammad SAW memilih Habasyah (Ethiopia) sebagai tempat suaka politik gelombang pertama?",
+    o:[
+      ["A","Habasyah merupakan wilayah jajahan langsung bangsa Quraisy."],
+      ["B","Raja Habasyah (Najasyi) dikenal sangat adil dan menjunjung tinggi perlindungan kemanusiaan meskipun berbeda keyakinan."],
+      ["C","Jarak Habasyah sangat dekat dengan Makkah sehingga logistik mudah dikontrol."],
+      ["D","Di Habasyah telah berdiri pangkalan militer kuat kaum Muslimin."],
+      ["E","Penduduk Habasyah memiliki bahasa dan struktur kabilah yang identik dengan Quraisy."]
+    ],
+    a:"B", e:"Raja Najasyi terkenal adil dan melindungi siapa pun yang mencari suaka di negerinya."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Refleksi Kepemimpinan Profetik Peristiwa Tha'if:</strong> Saat ditolak dan dilempari batu di Tha'if, Nabi menolak tawaran malaikat untuk menimpakan gunung kepada penduduk Tha'if dan justru mendoakan keturunan mereka. Nilai kepemimpinan profetik yang paling menonjol adalah...",
+    o:[
+      ["A","Penggunaan otoritas mutlak untuk menghukum rakyat yang membangkang."],
+      ["B","Kecerdasan emosional dan spiritual yang tinggi, mengedepankan kasih sayang (rahmatan lil 'alamin) di atas ego dan dendam."],
+      ["C","Sikap menyerah total terhadap situasi politik tanpa evaluasi strategi."],
+      ["D","Pengalihan tanggung jawab kepemimpinan kepada pihak ketiga."],
+      ["E","Kompromi teologis mencampuradukkan tauhid dan tradisi lokal."]
+    ],
+    a:"B", e:"Nabi mengutamakan visi kasih sayang jangka panjang daripada membalas dendam."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Analisis Transisi Strategi Aqabah I & II:</strong> Perbedaan paling mendasar yang menunjukkan eskalasi strategi dakwah dari periode Makkah ke Madinah melalui Perjanjian Aqabah II adalah...",
+    o:[
+      ["A","Peralihan dari dakwah kultural-personal di Makkah menuju pembangunan basis kedaulatan politik, pertahanan, dan perlindungan warga di Madinah."],
+      ["B","Penghapusan sistem perdagangan bebas dan penerapan monopoli harga oleh Anshar."],
+      ["C","Pemutusan total hubungan diplomatik dengan seluruh bangsa Arab non-muslim."],
+      ["D","Pemindahan kepemilikan harta penduduk Makkah secara paksa ke Yatsrib."],
+      ["E","Fokus eksklusif pada pengembangan filsafat tanpa aspek pertahanan sosial."]
+    ],
+    a:"A", e:"Aqabah II berisi ikrar perlindungan penuh yang membuka jalan terbentuknya masyarakat berdaulat di Madinah."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Evaluasi Konstitusional Piagam Madinah:</strong> Piagam Madinah menyatukan kaum Muslimin dan kabilah Yahudi sebagai satu komunitas (ummah wahidah) dengan hak membela kota serta kebebasan beragama. Dalam tata kelola modern, hal ini merefleksikan prinsip...",
+    o:[
+      ["A","Teokrasi total yang menolak hak kelompok minoritas."],
+      ["B","Pluralisme sosial, toleransi beragama, dan kontrak sosial yang adil dalam masyarakat multikultural."],
+      ["C","Monarki absolut yang memusatkan kekuasaan pada satu kepala suku."],
+      ["D","Kapitalisme bebas pajak yang mengabaikan keadilan distributif."],
+      ["E","Nasionalisme kesukuan sempit berdasarkan garis keturunan."]
+    ],
+    a:"B", e:"Piagam Madinah adalah kontrak sosial modern pertama yang menjamin toleransi dan hak warga majemuk."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Sosiologi Integrasi Muhajirin dan Anshar:</strong> Dampak sosiologis paling krusial dari kebijakan Nabi mempersaudarakan kaum Muhajirin dan Anshar bagi stabilitas awal negara Madinah adalah...",
+    o:[
+      ["A","Terjadinya kecemburuan sosial akut dari kabilah Yahudi."],
+      ["B","Terbentuknya integrasi sosial yang kokoh berbasis ikatan akidah, sehingga meredam potensi konflik laten antar suku Aus dan Khazraj."],
+      ["C","Ketergantungan ekonomi Muhajirin yang melemahkan finansial negara."],
+      ["D","Terjadinya monopoli aset pertanian oleh pendatang dari Makkah."],
+      ["E","Hilangnya identitas budaya lokal secara paksa akibat tekanan militer."]
+    ],
+    a:"B", e:"Ikatan persaudaraan iman melebur sekat kesukuan dan meredam konflik lama Aus dan Khazraj."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Analisis Rasionalitas Militer Perang Badar:</strong> Pasukan Muslim (±313 orang) mampu mengalahkan pasukan Quraisy (±1.000 orang). Dari sudut pandang manajemen organisasi dan strategi militer, faktor utama penentu kemenangan tersebut adalah...",
+    o:[
+      ["A","Jumlah pasukan kavaleri Muslim jauh lebih banyak dibanding musuh."],
+      ["B","Disiplin komando yang tinggi, loyalitas ideologis yang kuat, serta kematangan strategi bertahan di bawah komando Rasulullah SAW."],
+      ["C","Pasukan Quraisy datang tanpa pemimpin yang berpengalaman."],
+      ["D","Bantuan persenjataan canggih yang diselundupkan dari Romawi."],
+      ["E","Kebijakan membumihanguskan seluruh jalur logistik musuh sebelumnya."]
+    ],
+    a:"B", e:"Soliditas satu komando, penguasaan titik strategis mata air, dan disiplin tinggi menentukan kemenangan."
+  },
+  {
+    t:"PG", l:"Pilihan Ganda", tm:45,
+    q:"<strong>Studi Kasus Evaluasi Risiko Perang Uhud:</strong> Pasukan pemanah meninggalkan pos Bukit Ainain demi ghanimah sehingga dimanfaatkan kavaleri musuh. Ditinjau dari manajemen organisasi modern, hikmah utama peristiwa ini adalah...",
+    o:[
+      ["A","Taktik gerilya tidak efektif dalam pertempuran terbuka."],
+      ["B","Kedisiplinan terhadap SOP dan komando pimpinan jauh lebih utama daripada orientasi materi."],
+      ["C","Kuantitas prajurit tidak menentukan efektivitas pencapaian sasaran."],
+      ["D","Pembagian bonus finansial harus diselesaikan sebelum operasi dimulai."],
+      ["E","Keputusan taktis harus diputuskan lewat pemungutan suara di lapangan."]
+    ],
+    a:"B", e:"Melanggar SOP/perintah pimpinan demi keuntungan materi sesaat berakibat fatal bagi tim."
+  },
+  {
+    t:"PGK", l:"PG Kompleks (Pilih 2)", tm:55,
+    q:"Manakah <strong>DUA tradisi positif</strong> masyarakat Arab pra-Islam yang dapat diintegrasikan dengan nilai Panca Cinta (cinta sesama manusia dan menjaga kehormatan)?",
+    o:[
+      ["A","Memuliakan tamu dengan menjamu mereka secara maksimal tanpa memandang status sosial."],
+      ["B","Membela anggota kabilah secara membabi buta meskipun berada di pihak yang bersalah (ashabiyah)."],
+      ["C","Menepati janji yang telah diikrarkan karena dianggap sebagai utang kehormatan diri dan suku."],
+      ["D","Mengadakan pasar tahunan Ukaz khusus untuk memamerkan kekayaan dan memperjualbelikan budak."],
+      ["E","Melakukan peperangan antar-kabilah untuk mempertahankan harga diri dan wilayah kekuasaan."]
+    ],
+    a:["A","C"], e:"Memuliakan tamu dan menepati janji adalah tradisi luhur bangsa Arab yang dilestarikan Islam."
+  },
+  {
+    t:"PGK", l:"PG Kompleks (Pilih 2)", tm:55,
+    q:"Mengapa strategi dakwah <em>sirriyah</em> di Darul Arqam selama ±3 tahun merupakan langkah bijaksana ditinjau dari aspek keamanan dan perlindungan pengikut? <strong>(Pilih 2 jawaban!)</strong>",
+    o:[
+      ["A","Meminimalisir potensi benturan fisik terbuka yang dapat mengancam keselamatan fisik komunitas muslim awal."],
+      ["B","Membuka jalur negosiasi diplomatik dengan pemerintah Habasyah untuk mengamankan suaka politik."],
+      ["C","Mengokohkan pembinaan akidah dan ikatan ukhuwah internal sebelum berhadapan dengan tekanan sosial Quraisy."],
+      ["D","Merahasiakan risalah agama Islam agar hanya menjadi ajaran internal keluarga Bani Hasyim."],
+      ["E","Menggalang dana finansial dari saudagar Makkah untuk pengadaan perlengkapan persenjataan."]
+    ],
+    a:["A","C"], e:"Sirriyah melindungi fisik umat yang masih sedikit sekaligus menguatkan akidah di Darul Arqam."
+  },
+  {
+    t:"PGK", l:"PG Kompleks (Pilih 2)", tm:55,
+    q:"Dari peristiwa pemboikotan Quraisy di lembah Syi'b Abi Thalib, pilihlah <strong>DUA hikmah utama</strong> yang mencerminkan semangat <em>ukhuwah insaniyah</em> dan keteguhan cinta kepada Allah SWT!",
+    o:[
+      ["A","Soliditas dan kesetiaan keluarga besar Nabi Muhammad saw. tetap terjaga meskipun sebagian belum memeluk Islam."],
+      ["B","Umat Islam membalas pemboikotan tersebut dengan memutus jalur perdagangan Quraisy ke Syam."],
+      ["C","Rasa kemanusiaan mampu menembus sekat perbedaan keyakinan, terbukti dari upaya beberapa tokoh Quraisy merobek piagam boikot."],
+      ["D","Rasulullah saw. meminta para sahabat meninggalkan Makkah seluruhnya agar terhindar dari penderitaan."],
+      ["E","Kaum muslimin menyerah pada tekanan ekonomi sehingga menyepakati kompromi ibadah bersama Quraisy."]
+    ],
+    a:["A","C"], e:"Keluarga Nabi tetap solid membela beliau, dan nurani kemanusiaan tokoh Quraisy akhirnya membatalkan boikot."
+  },
+  {
+    t:"PGK", l:"PG Kompleks (Pilih 2)", tm:55,
+    q:"Manakah <strong>DUA prinsip utama</strong> dalam Piagam Madinah (<em>Shahifah al-Madinah</em>) yang menjadi fondasi terciptanya masyarakat damai dan penuh cinta tanah air?",
+    o:[
+      ["A","Menjamin kebebasan beragama dan beribadah bagi seluruh penduduk Madinah, baik muslim maupun non-muslim (Yahudi)."],
+      ["B","Mewajibkan seluruh penduduk Madinah dari berbagai suku untuk memeluk agama Islam agar seragam."],
+      ["C","Menetapkan kewajiban bersama bagi seluruh warga Madinah untuk saling membantu mempertahankan kota dari serangan musuh."],
+      ["D","Memberikan hak istimewa kepada kaum Muhajirin untuk memegang seluruh jabatan pemerintahan."],
+      ["E","Menghapuskan seluruh adat istiadat suku Aus dan Khazraj agar digantikan tradisi Makkah."]
+    ],
+    a:["A","C"], e:"Piagam Madinah menjamin kebebasan beribadah dan kewajiban bersama mempertahankan kota Madinah."
+  },
+  {
+    t:"PGK", l:"PG Kompleks (Pilih 2)", tm:55,
+    q:"Berdasarkan peristiwa amnesti massal saat <strong>Fathu Makkah (8 H)</strong>, pilihlah <strong>DUA sikap keteladanan</strong> Rasulullah SAW yang relevan diterapkan pelajar madrasah dalam membangun iklim damai modern!",
+    o:[
+      ["A","Mengutamakan sikap pemaaf dan rekonsiliasi daripada membalas dendam ketika berada pada posisi yang kuat atau menang."],
+      ["B","Menghukum berat siapa saja yang pernah berbeda pendapat demi menjaga wibawa lingkungan sosial."],
+      ["C","Menjaga martabat dan rasa aman setiap manusia tanpa merendahkan pihak yang pernah melakukan kesalahan di masa lalu."],
+      ["D","Menuntut ganti rugi harta benda secara paksa kepada pihak lawan sebagai syarat perdamaian."],
+      ["E","Memutuskan hubungan sosial dengan orang-orang yang pernah berbuat zalim meskipun telah mengakui kesalahan."]
+    ],
+    a:["A","C"], e:"Fathu Makkah mengajarkan pengampunan tanpa balas dendam serta menjaga martabat dan rasa aman sesama."
+  },
+  {
+    t:"TF", l:"Benar / Salah", tm:60,
+    q:"Pada periode Makkah, Rasulullah SAW mengawali dakwah secara sembunyi-sembunyi (sirriyah) yang dipusatkan di rumah sahabat Arqam bin Abil Arqam.",
+    items:[
+      ["Rasulullah SAW mengawali dakwah Islam di Makkah secara sembunyi-sembunyi.", true],
+      ["Tempat pusat dakwah sembunyi-sembunyi berada di rumah Arqam bin Abil Arqam.", true],
+      ["Dakwah sembunyi-sembunyi dilakukan secara terang-terangan di hadapan seluruh penduduk Makkah.", false],
+      ["Rumah Arqam bin Abil Arqam digunakan sebagai markas dakwah terbuka kaum musyrik Quraisy.", false]
+    ],
+    e:"Dakwah sirriyah dilaksanakan secara tertutup di Darul Arqam bagi kalangan terdekat."
+  },
+  {
+    t:"TF", l:"Benar / Salah", tm:60,
+    q:"Golongan pertama yang masuk Islam disebut As-Sabiqunal Awwalun, di antaranya Khadijah binti Khuwailid, Ali bin Abi Thalib, Abu Bakar Ash-Shiddiq, dan Zaid bin Haritsah.",
+    items:[
+      ["Sebutan bagi orang-orang yang pertama kali masuk Islam adalah As-Sabiqunal Awwalun.", true],
+      ["Khadijah binti Khuwailid termasuk dalam golongan orang-orang yang pertama masuk Islam.", true],
+      ["Golongan As-Sabiqunal Awwalun terdiri dari orang-orang yang menentang ajaran Nabi Muhammad SAW.", false],
+      ["Abu Bakar Ash-Shiddiq masuk Islam setelah seluruh pembesar Quraisy menyatakan keimanannya.", false]
+    ],
+    e:"As-Sabiqunal Awwalun adalah pemeluk Islam generasi pertama yang langsung beriman di awal kenabian."
+  },
+  {
+    t:"TF", l:"Benar / Salah", tm:60,
+    q:"Setelah berdakwah secara sembunyi-sembunyi, turun perintah Allah SWT melalui Surah Al-Hijr ayat 94 agar Nabi berdakwah terang-terangan (jahriyah) kepada kaum Quraisy.",
+    items:[
+      ["Perintah dakwah secara terang-terangan termuat di dalam Surah Al-Hijr ayat 94.", true],
+      ["Dakwah secara terang-terangan (jahriyah) ditujukan kepada kaum Quraisy di Makkah.", true],
+      ["Dakwah terang-terangan dilakukan sebelum Nabi Muhammad SAW memulai dakwah sembunyi-sembunyi.", false],
+      ["Perintah dakwah terang-terangan diturunkan melalui perantara Nabi Ibrahim AS.", false]
+    ],
+    e:"QS. Al-Hijr: 94 memerintahkan penyampaian dakwah secara terbuka setelah fase sirriyah selesai."
+  },
+  {
+    t:"TF", l:"Benar / Salah", tm:60,
+    q:"Fokus utama ajaran Rasulullah SAW pada periode Makkah adalah penanaman akidah tauhid (mengesakan Allah SWT) dan membersihkan praktik penyembahan berhala.",
+    items:[
+      ["Fokus utama dakwah periode Makkah adalah penanaman akidah tauhid.", true],
+      ["Rasulullah SAW mengajak masyarakat Makkah untuk meninggalkan penyembahan berhala.", true],
+      ["Praktik penyembahan berhala baru pertama kali muncul setelah kedatangan Islam di Makkah.", false],
+      ["Ajaran tauhid pada periode Makkah berfokus pada pembagian hukum waris dan syariat hukum pidana.", false]
+    ],
+    e:"Periode Makkah menekankan fondasi tauhid, sedangkan hukum syariat rinci diturunkan pada periode Madinah."
+  },
+  {
+    t:"TF", l:"Benar / Salah", tm:60,
+    q:"Dalam menghadapi intimidasi kaum Quraisy di Makkah, paman Nabi yaitu Abu Thalib senantiasa memberikan perlindungan penuh meskipun wafat sebelum memeluk Islam.",
+    items:[
+      ["Paman Nabi Muhammad SAW yang memberikan perlindungan fisik dan sosial di Makkah adalah Abu Thalib.", true],
+      ["Kaum kafir Quraisy melakukan penolakan keras dan intimidasi terhadap dakwah Rasulullah SAW.", true],
+      ["Abu Thalib memberikan perlindungan kepada Nabi Muhammad SAW karena ia telah memeluk agama Islam.", false],
+      ["Abu Thalib wafat dan dimakamkan sebagai pemimpin utama pemerintahan kaum muslimin di Madinah.", false]
+    ],
+    e:"Abu Thalib melindungi Nabi atas dasar kekeluargaan Bani Hasyim hingga wafatnya di Makkah."
+  },
+  {
+    t:"MATCH", l:"Menjodohkan", tm:65,
+    q:"Cocokkan pernyataan mengenai <strong>fase awal dakwah periode Makkah</strong> dengan jawaban yang tepat!",
+    p:[
+      ["1. Sahabat yang rumahnya menjadi pusat dakwah sembunyi-sembunyi di Makkah.","A"],
+      ["2. Sebutan bagi golongan orang-orang yang pertama kali masuk Islam.","B"],
+      ["3. Ayat Al-Qur'an landasan perintah dakwah secara terang-terangan (jahriyah).","C"]
+    ],
+    c:[
+      ["A","A. Arqam bin Abil Arqam"],
+      ["B","B. As-Sabiqunal Awwalun"],
+      ["C","C. Surah Al-Hijr ayat 94"],
+      ["D","D. Perjanjian Hudaibiyah"],
+      ["E","E. Abu Thalib"]
+    ],
+    e:"1-A (Arqam bin Abil Arqam), 2-B (As-Sabiqunal Awwalun), 3-C (Surah Al-Hijr ayat 94)."
+  },
+  {
+    t:"MATCH", l:"Menjodohkan", tm:65,
+    q:"Cocokkan pernyataan mengenai <strong>tantangan dan perlindungan dakwah di Makkah</strong>!",
+    p:[
+      ["1. Paman Rasulullah SAW yang memberikan perlindungan fisik dan sosial di Makkah.","A"],
+      ["2. Wilayah tujuan hijrah gelombang pertama kaum Muslimin untuk suaka politik.","B"],
+      ["3. Bentuk tekanan ekonomi Quraisy terhadap Bani Hasyim dan Bani Muthallib.","C"]
+    ],
+    c:[
+      ["A","A. Abu Thalib"],
+      ["B","B. Negeri Habasyah"],
+      ["C","C. Pemboikotan ekonomi dan sosial"],
+      ["D","D. Perang Badar Kubro"],
+      ["E","E. Fathu Makkah"]
+    ],
+    e:"1-A (Abu Thalib), 2-B (Negeri Habasyah), 3-C (Pemboikotan ekonomi dan sosial)."
+  },
+  {
+    t:"MATCH", l:"Menjodohkan", tm:65,
+    q:"Cocokkan pernyataan mengenai peristiwa <strong>Amul Huzni dan Isra' Mi'raj</strong>!",
+    p:[
+      ["1. Sebutan tahun wafatnya Khadijah binti Khuwailid dan Abu Thalib.","A"],
+      ["2. Peran sentral Khadijah dan Abu Thalib dalam mendukung perjuangan Nabi.","B"],
+      ["3. Peristiwa maha dahsyat sebagai hiburan spiritual (tasliyah) pasca Amul Huzni.","C"]
+    ],
+    c:[
+      ["A","A. Tahun Kesedihan (Amul Huzni)"],
+      ["B","B. Istri pelindung dana dakwah & paman pelindung benteng sosial"],
+      ["C","C. Peristiwa Isra' Mi'raj"],
+      ["D","D. Perjanjian Hudaibiyah"],
+      ["E","E. Deklarasi Piagam Madinah"]
+    ],
+    e:"1-A (Amul Huzni), 2-B (Peran Khadijah & Abu Thalib), 3-C (Isra' Mi'raj)."
+  },
+  {
+    t:"MATCH", l:"Menjodohkan", tm:65,
+    q:"Cocokkan pernyataan mengenai <strong>hijrah dan pembangunan masyarakat Madinah</strong>!",
+    p:[
+      ["1. Kota tujuan hijrah Rasulullah SAW yang menjadi pusat peradaban Islam awal.","A"],
+      ["2. Dokumen konstitusi tertulis pertama di dunia yang mengatur kerukunan di Madinah.","B"],
+      ["3. Strategi integrasi sosial Nabi untuk menyatukan Muhajirin dan Anshar.","C"]
+    ],
+    c:[
+      ["A","A. Madinah (Yatsrib)"],
+      ["B","B. Piagam Madinah"],
+      ["C","C. Ukhuwah Islamiyah (Persaudaraan)"],
+      ["D","D. Perjanjian Hudaibiyah"],
+      ["E","E. Kota Thaif"]
+    ],
+    e:"1-A (Madinah/Yatsrib), 2-B (Piagam Madinah), 3-C (Ukhuwah Islamiyah)."
+  },
+  {
+    t:"MATCH", l:"Menjodohkan", tm:65,
+    q:"Cocokkan pernyataan mengenai <strong>Kurikulum Berbasis Cinta (KBC) dalam SKI</strong>!",
+    p:[
+      ["1. Landasan orientasi utama pendekatan KBC dalam menelaah sejarah Islam.","A"],
+      ["2. Relevansi utama pembelajaran SKI bagi siswa madrasah saat ini.","B"],
+      ["3. Harapan tujuan akhir pembelajaran SKI bagi etika sosial peserta didik.","D"]
+    ],
+    c:[
+      ["A","A. Internalisasi nilai kemanusiaan, kedamaian, dan keteladanan akhlak"],
+      ["B","B. Penguatan moderasi beragama di era kontemporer"],
+      ["C","C. Menghafal silsilah dan angka tahun sejarah secara kaku"],
+      ["D","D. Terwujudnya karakter cinta kasih dan toleransi sosial dalam bermasyarakat"],
+      ["E","E. Penguasaan taktik pertahanan dan ekspansi wilayah"]
+    ],
+    e:"1-A (Internalisasi kemanusiaan), 2-B (Moderasi beragama), 3-D (Karakter cinta kasih & toleransi)."
+  }
+];
+let list=[], idx=0, score=0, lives=3, combo=0, okCnt=0, tmr=null, tLeft=45, tTot=45, done=false;
+let selPG=null, selPGK=[], selTF={}, selM={};
+
+const $ = id => document.getElementById(id);
+const shuffle = a => [...a].sort(() => Math.random() - 0.5);
+
+function startGame() {
+  list = shuffle(DB); idx = 0; score = 0; lives = 3; combo = 0; okCnt = 0;
+  $("s-start").classList.add("hide");
+  $("s-end").classList.add("hide");
+  $("s-quiz").classList.remove("hide");
+  $("hdr").classList.remove("hide");
+  $("twrap").classList.remove("hide");
+  hud(); renderQ();
+}
+
+function hud() {
+  $("lives").textContent = lives;
+  $("score").textContent = score;
+  $("combo").textContent = combo > 1 ? `(${combo}x)` : "";
+}
+
+function startTmr(sec) {
+  clearInterval(tmr); tTot = tLeft = sec;
+  $("tbar").style.width = "100%"; $("tbar").style.background = "#d97706";
+  $("timer").textContent = tLeft;
+  tmr = setInterval(() => {
+    tLeft--; $("timer").textContent = tLeft;
+    let pct = (tLeft / tTot) * 100;
+    $("tbar").style.width = pct + "%";
+    if (pct <= 25) $("tbar").style.background = "#dc2626";
+    if (tLeft <= 0) { clearInterval(tmr); timeOut(); }
+  }, 1000);
+}
+
+function timeOut() {
+  if (done) return; done = true; lives--; combo = 0; hud();
+  let q = list[idx]; reveal(q);
+  showFb(false, `⏰ Waktu Habis! ${q.e}`);
+  prepNext();
+}
+
+function renderQ() {
+  done = false; selPG = null; selPGK = []; selTF = {}; selM = {};
+  let q = list[idx];
+  $("badge").textContent = q.l;
+  $("prog").textContent = `Soal ${idx + 1} dari ${list.length}`;
+  $("qtext").innerHTML = q.q;
+  $("fb").className = "fb"; $("fb").innerHTML = "";
+  $("btn-sub").classList.remove("hide");
+  $("btn-nxt").classList.add("hide");
+
+  let area = $("area"); area.innerHTML = "";
+  if (q.t === "PG") {
+    $("hint").textContent = "Pilih SATU jawaban yang paling tepat:";
+    let d = document.createElement("div"); d.className = "opt-list";
+    q.o.forEach(([k, txt]) => {
+      let b = document.createElement("button"); b.className = "opt"; b.dataset.k = k;
+      b.innerHTML = `<span class="key">${k}</span><span>${txt}</span>`;
+      b.onclick = () => {
+        if (done) return;
+        document.querySelectorAll(".opt").forEach(x => x.classList.remove("sel"));
+        b.classList.add("sel"); selPG = k;
+      };
+      d.appendChild(b);
+    });
+    area.appendChild(d);
+  } else if (q.t === "PGK") {
+    $("hint").textContent = "Pilih DUA jawaban yang paling tepat:";
+    let d = document.createElement("div"); d.className = "opt-list";
+    q.o.forEach(([k, txt]) => {
+      let b = document.createElement("button"); b.className = "opt"; b.dataset.k = k;
+      b.innerHTML = `<span class="key">${k}</span><span>${txt}</span>`;
+      b.onclick = () => {
+        if (done) return;
+        let i = selPGK.indexOf(k);
+        if (i > -1) { selPGK.splice(i, 1); b.classList.remove("sel"); }
+        else {
+          if (selPGK.length >= 2) return alert("Maksimal pilih 2 jawaban!");
+          selPGK.push(k); b.classList.add("sel");
+        }
+      };
+      d.appendChild(b);
+    });
+    area.appendChild(d);
+  } else if (q.t === "TF") {
+    $("hint").textContent = "Tentukan BENAR atau SALAH untuk tiap pernyataan:";
+    q.items.forEach(([txt], i) => {
+      let r = document.createElement("div"); r.className = "tf-row"; r.id = `tfr-${i}`;
+      r.innerHTML = `<div style="flex:1">${i+1}. ${txt}</div>
+        <div class="tf-btns">
+          <button type="button" class="tf-b" id="tft-${i}" onclick="pickTF(${i},true)">BENAR</button>
+          <button type="button" class="tf-b" id="tff-${i}" onclick="pickTF(${i},false)">SALAH</button>
+        </div>`;
+      area.appendChild(r);
+    });
+  } else if (q.t === "MATCH") {
+    $("hint").textContent = "Pasangkan setiap pernyataan dengan jawaban yang sesuai:";
+    q.p.forEach(([txt], i) => {
+      let r = document.createElement("div"); r.className = "m-row"; r.id = `mr-${i}`;
+      let opts = `<option value="">-- Pilih Jawaban --</option>` + q.c.map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
+      r.innerHTML = `<div><strong>${txt}</strong></div><select class="m-sel" id="ms-${i}" onchange="selM[${i}]=this.value">${opts}</select>`;
+      area.appendChild(r);
+    });
+  }
+  startTmr(q.tm);
+}
+
+function pickTF(i, v) {
+  if (done) return; selTF[i] = v;
+  $(`tft-${i}`).className = v === true ? "tf-b on-t" : "tf-b";
+  $(`tff-${i}`).className = v === false ? "tf-b on-f" : "tf-b";
+}
+
+function checkAns() {
+  if (done) return;
+  let q = list[idx];
+  if (q.t === "PG" && !selPG) return alert("Pilih salah satu jawaban!");
+  if (q.t === "PGK" && selPGK.length !== 2) return alert("Pilih tepat 2 jawaban!");
+  if (q.t === "TF" && Object.keys(selTF).length < q.items.length) return alert("Lengkapi semua pilihan Benar/Salah!");
+  if (q.t === "MATCH" && q.p.some((_, i) => !selM[i])) return alert("Pasangkan semua pernyataan!");
+
+  clearInterval(tmr); done = true;
+  let ok = false;
+  if (q.t === "PG") ok = selPG === q.a;
+  else if (q.t === "PGK") ok = [...selPGK].sort().join() === [...q.a].sort().join();
+  else if (q.t === "TF") ok = q.items.every(([, ans], i) => selTF[i] === ans);
+  else if (q.t === "MATCH") ok = q.p.every(([, ans], i) => selM[i] === ans);
+
+  reveal(q);
+  if (ok) {
+    combo++; okCnt++;
+    let pts = 100 + Math.round((tLeft / tTot) * 50) + (combo - 1) * 20;
+    score += pts;
+    showFb(true, `✅ Tepat Sekali! (+${pts} Poin) — ${q.e}`);
+  } else {
+    lives--; combo = 0;
+    showFb(false, `❌ Kurang Tepat! — ${q.e}`);
+  }
+  hud(); prepNext();
+}
+
+function reveal(q) {
+  if (q.t === "PG") {
+    document.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true; let k = b.dataset.k;
+      if (k === q.a) b.classList.add("ok");
+      else if (k === selPG) b.classList.add("err");
+    });
+  } else if (q.t === "PGK") {
+    document.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true; let k = b.dataset.k;
+      if (q.a.includes(k)) b.classList.add("ok");
+      else if (selPGK.includes(k)) b.classList.add("err");
+    });
+  } else if (q.t === "TF") {
+    q.items.forEach(([, ans], i) => {
+      $(`tft-${i}`).disabled = $(`tff-${i}`).disabled = true;
+      $(`tfr-${i}`).classList.add(selTF[i] === ans ? "row-ok" : "row-err");
+    });
+  } else if (q.t === "MATCH") {
+    q.p.forEach(([, ans], i) => {
+      $(`ms-${i}`).disabled = true;
+      $(`mr-${i}`).classList.add(selM[i] === ans ? "row-ok" : "row-err");
+    });
+  }
+}
+
+function showFb(ok, msg) {
+  $("fb").className = ok ? "fb ok" : "fb err";
+  $("fb").innerHTML = msg;
+}
+
+function prepNext() {
+  $("btn-sub").classList.add("hide");
+  $("btn-nxt").classList.remove("hide");
+  $("btn-nxt").textContent = (lives <= 0 || idx >= list.length - 1) ? "Lihat Hasil Akhir 🏁" : "Soal Berikutnya ➡️";
+}
+
+function nextQ() {
+  if (lives <= 0 || idx >= list.length - 1) {
+    clearInterval(tmr);
+    $("s-quiz").classList.add("hide"); $("hdr").classList.add("hide"); $("twrap").classList.add("hide");
+    $("s-end").classList.remove("hide");
+    $("etitle").textContent = lives <= 0 ? "💔 Nyawa Habis!" : "🎉 Tantangan Tuntas!";
+    $("esub").textContent = lives <= 0 ? "Pelajari kembali pembahasannya dan coba lagi!" : "Hebat, kamu telah menaklukkan seluruh kisi-kisi SKI!";
+    $("fscore").textContent = `${score} Poin`;
+    $("fstat").textContent = `Benar ${okCnt} dari ${list.length} soal.`;
+  } else { idx++; renderQ(); }
+}
+</script>
+</body>
+</html>
